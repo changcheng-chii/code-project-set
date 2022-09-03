@@ -1,1 +1,1 @@
-1、ccprogram为基于Qt的局域网传输工具的程序
+1、ccprogram和message程序是关于Qt的局域网传输工具的程序
