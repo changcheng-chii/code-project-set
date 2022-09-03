@@ -1,0 +1,6 @@
+    
+注意：
+    为实现在Java中调用POS-SDK.dll打印动态连接库，需要把jna.jar加入到应用程序的工程中。
+注意如果是java64位，请选择POS-SDK_V1006发布\SDK\sdk_64目录或POS-SDK_V1006发布\Testing\sdk\sdk_64下的dll替换POS-SDK_V1006发布\Testing\sdk目录下的dll；
+
+				qzfeng 2015/03/31

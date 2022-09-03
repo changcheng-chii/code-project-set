@@ -1,0 +1,45 @@
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.pdb
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\obj\x86\Release\ResolveAssemblyReference.cache
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Form1.resources
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Properties.Resources.resources
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.csproj.GenerateResource.Cache
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.exe
+E:\主要软件包\POS-SDK\POS-SDK_V1003_VS2008-20141016\POS-SDK-V1003-20141016\POS-SDK_V1003发布20141016\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.pdb
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.exe
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.pdb
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.pdb
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\obj\x86\Release\ResolveAssemblyReference.cache
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Form1.resources
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Properties.Resources.resources
+D:\主要软件包\POS-SDK\POS-SDK_V1004_VS2008-20141027\POS-SDK-V1004-VS2008-20141027\POS-SDK_V1004发布20141027\Testing\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.csproj.GenerateResource.Cache
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.pdb
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\obj\x86\Release\ResolveAssemblyReference.cache
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Form1.resources
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Properties.Resources.resources
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.csproj.GenerateResource.Cache
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.exe
+E:\wangdongsai\work\svn\POS-SDK_V1007发布\Testing\c#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.pdb
+G:\POS_SDK_C#_V1008\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe.config
+G:\POS_SDK_C#_V1008\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe
+G:\POS_SDK_C#_V1008\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.pdb
+G:\POS_SDK_C#_V1008\TestSDKCSharp\obj\x86\Release\ResolveAssemblyReference.cache
+G:\POS_SDK_C#_V1008\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Form1.resources
+G:\POS_SDK_C#_V1008\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Properties.Resources.resources
+G:\POS_SDK_C#_V1008\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.csproj.GenerateResource.Cache
+G:\POS_SDK_C#_V1008\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.exe
+G:\POS_SDK_C#_V1008\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.pdb
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe.config
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.exe
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.pdb
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.exe
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\bin\x86\Release\TestSDKCSharp.pdb
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\bin\x86\Release\en-US\TestSDKCSharp.resources.dll
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Form1.resources
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Properties.Resources.resources
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.Form1.en-US.resources
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\TestSDKCSharp.csproj.GenerateResource.Cache
+C:\Users\Dike\Desktop\case_114_POS_SDK C#英文界面\C#\TestSDKCSharp\obj\x86\Release\en-US\TestSDKCSharp.resources.dll

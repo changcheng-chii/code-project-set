@@ -1,0 +1,1600 @@
+// TestPOSDlg.cpp : implementation file
+//
+
+#include "stdafx.h"
+#include "TestPOS.h"
+#include "TestPOSDlg.h"
+#include "LoadDll.h"
+#include <TCHAR.h>
+#include <io.h>
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
+
+#include <Winsock2.h>
+
+#define POS_PT_COM			1000L
+#define POS_PT_LPT			1001L
+#define POS_PT_USB			1002L
+#define POS_PT_NET			1003L
+
+#define POS_ES_PAPERENDING  6L //纸将尽
+#define POS_ES_DRAWERHIGH   5L //钱箱高电平
+#define POS_ES_CUT          4L //切刀未复位
+#define POS_ES_DOOROPEN     3L //纸仓门开
+#define	POS_ES_HEAT         2L //机头过热
+#define POS_ES_PAPEROUT     1L //打印机缺纸
+#define POS_ES_SUCCESS      0L //成功/发送成功/状态正常/打印完成
+#define POS_ES_INVALIDPARA  -1L //参数错误
+#define POS_ES_WRITEFAIL    -2L //写失败
+#define POS_ES_READFAIL     -3L //读失败
+#define POS_ES_NONMONOCHROMEBITMAP -4L //非单色位图
+#define POS_ES_OVERTIME     -5L //超时/写超时/读超时/打印未完成
+#define POS_ES_FILEOPENERROR -6L //文件/图片打开失败
+#define POS_ES_OTHERERRORS   -100L //其他原因导致的错误
+
+// barcode type
+#define POS_BT_UPCA			4001L
+#define POS_BT_UPCE			4002L
+#define POS_BT_JAN13		4003L
+#define POS_BT_JAN8			4004L
+#define POS_BT_CODE39		4005L
+#define POS_BT_ITF			4006L
+#define POS_BT_CODABAR		4007L
+#define POS_BT_CODE93		4073L
+#define POS_BT_CODE128		4074L
+
+//Dimensional barcode type
+#define POS_BT_PDF417		4100L
+#define POS_BT_DATAMATRIX	4101L
+#define POS_BT_QRCODE		4102L
+
+// HRI type
+#define POS_HT_NONE			4011L
+#define POS_HT_UP			4012L
+#define POS_HT_DOWN			4013L
+#define POS_HT_BOTH			4014L
+
+/////////////////////////////////////////////////////////////////////////////
+// CTestPOSDlg dialog
+
+CTestPOSDlg::CTestPOSDlg(CWnd* pParent /*=NULL*/)
+	: CDialog(CTestPOSDlg::IDD, pParent)
+{
+	//{{AFX_DATA_INIT(CTestPOSDlg)
+		// NOTE: the ClassWizard will add member initialization here
+	//}}AFX_DATA_INIT
+	// Note that LoadIcon does not require a subsequent DestroyIcon in Win32
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+}
+
+void CTestPOSDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(CTestPOSDlg)
+		// NOTE: the ClassWizard will add DDX and DDV calls here
+	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_STATIC_BITMAP, m_strBitmapStatic);
+}
+
+BEGIN_MESSAGE_MAP(CTestPOSDlg, CDialog)
+	//{{AFX_MSG_MAP(CTestPOSDlg)
+	ON_WM_PAINT()
+	ON_WM_QUERYDRAGICON()
+	ON_WM_DESTROY()
+	ON_CBN_SELCHANGE(IDC_COMBO6,&CTestPOSDlg::OnCbnSelchange)
+    ON_CBN_SELCHANGE(IDC_COMBO2,&CTestPOSDlg::OnCbnSelchangeOneDimensionalBarcode)
+	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDOK, &CTestPOSDlg::OnBnClickedOk)
+	ON_BN_CLICKED(IDC_RADIO1, &CTestPOSDlg::OnBnClickedRadio1)
+	ON_BN_CLICKED(IDC_RADIO2, &CTestPOSDlg::OnBnClickedRadio2)
+	ON_BN_CLICKED(IDC_RADIO3, &CTestPOSDlg::OnBnClickedRadio3)
+	ON_BN_CLICKED(IDC_RADIO4, &CTestPOSDlg::OnBnClickedRadio4)
+	ON_BN_CLICKED(IDC_BUTTON1, &CTestPOSDlg::OnBnClickedOpenPort)
+	ON_BN_CLICKED(IDC_BUTTON2, &CTestPOSDlg::OnBnClickedClosePort)
+	ON_BN_CLICKED(IDC_BUTTON3, &CTestPOSDlg::OnBnClickedBrowseBmp)
+	ON_BN_CLICKED(IDC_BUTTON4, &CTestPOSDlg::OnBnClickedBitmapPrint)
+	ON_BN_CLICKED(IDC_BUTTON5, &CTestPOSDlg::OnBnClickedCutPaper)
+	ON_BN_CLICKED(IDC_BUTTON6, &CTestPOSDlg::OnBnClickedCashBox)
+	ON_BN_CLICKED(IDC_BUTTON7, &CTestPOSDlg::OnBnClickedPrinterId)
+	ON_BN_CLICKED(IDC_BUTTON8, &CTestPOSDlg::OnBnClickedBlackMark)
+	ON_BN_CLICKED(IDC_BUTTON9, &CTestPOSDlg::OnBnClickedOutPaper)
+	ON_BN_CLICKED(IDC_BUTTON10, &CTestPOSDlg::OnBnClickedStateQuery)
+	ON_BN_CLICKED(IDC_BUTTON11, &CTestPOSDlg::OnBnClickedCharacterPrint)
+	ON_BN_CLICKED(IDC_BUTTON12, &CTestPOSDlg::OnBnClickedOneDimensionalBarcode)
+	ON_BN_CLICKED(IDC_BUTTON13, &CTestPOSDlg::OnBnClickedTwoDimensionalBarcode)
+	ON_BN_CLICKED(IDC_BUTTON15, &CTestPOSDlg::OnBnClickedBrowseFile)
+	ON_BN_CLICKED(IDC_BUTTON14, &CTestPOSDlg::OnBnClickedPrintFile)
+	ON_BN_CLICKED(IDC_BUTTON18, &CTestPOSDlg::OnBnClickedCatering)
+	ON_BN_CLICKED(IDC_RADIO5, &CTestPOSDlg::OnBnClickedRadioRom)
+	ON_BN_CLICKED(IDC_RADIO6, &CTestPOSDlg::OnBnClickedRadioDrive)
+	ON_BN_CLICKED(IDC_RADIO7, &CTestPOSDlg::OnBnClickedRadioPaperType88)
+	ON_BN_CLICKED(IDC_RADIO8, &CTestPOSDlg::OnBnClickedRadioPaperType58)
+	ON_BN_CLICKED(IDC_RADIO9, &CTestPOSDlg::OnBnClickedRadioPaperType76)
+	ON_BN_CLICKED(IDC_BUTTON17, &CTestPOSDlg::OnBnClickedButtonCashier)
+	ON_BN_CLICKED(IDC_BUTTON20, &CTestPOSDlg::OnBnClickedTest)
+	ON_BN_CLICKED(IDC_BUTTON25, &CTestPOSDlg::OnBnClickedButton25)
+END_MESSAGE_MAP()
+
+/////////////////////////////////////////////////////////////////////////////
+// CTestPOSDlg message handlers
+
+BOOL CTestPOSDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	// Set the icon for this dialog.  The framework does this automatically
+	//  when the application's main window is not a dialog
+	SetIcon(m_hIcon, TRUE);			// Set big icon
+	SetIcon(m_hIcon, FALSE);		// Set small icon
+	
+	// TODO: Add extra initialization here
+	if(LoadSDKLibrary())
+	{
+		MessageBox(_T("加载sdk出错"));
+		this->OnCancel();
+		//return FALSE;
+	} 
+    ButtonInit();
+	return TRUE;  // return TRUE  unless you set the focus to a control
+}
+
+// If you add a minimize button to your dialog, you will need the code below
+//  to draw the icon.  For MFC applications using the document/view model,
+//  this is automatically done for you by the framework.
+
+void CTestPOSDlg::OnPaint() 
+{
+	if (IsIconic())
+	{
+		CPaintDC dc(this); // device context for painting
+
+		SendMessage(WM_ICONERASEBKGND, (WPARAM) dc.GetSafeHdc(), 0);
+
+		// Center icon in client rectangle
+		int cxIcon = GetSystemMetrics(SM_CXICON);
+		int cyIcon = GetSystemMetrics(SM_CYICON);
+		CRect rect;
+		GetClientRect(&rect);
+		int x = (rect.Width() - cxIcon + 1) / 2;
+		int y = (rect.Height() - cyIcon + 1) / 2;
+
+		// Draw the icon
+		dc.DrawIcon(x, y, m_hIcon);
+	}
+	else
+	{
+		CDialog::OnPaint();
+	}
+}
+
+// The system calls this to obtain the cursor to display while the user drags
+//  the minimized window.
+HCURSOR CTestPOSDlg::OnQueryDragIcon()
+{
+	return (HCURSOR) m_hIcon;
+}
+
+void CTestPOSDlg::OnDestroy() 
+{
+	CDialog::OnDestroy();
+	
+	// TODO: Add your message handler code here
+	if (m_hPrinter > 0)
+	{
+		POS_Port_Close(m_hPrinter);
+	}
+	FreeSDKLibrary();
+}
+
+void CTestPOSDlg::OnBnClickedOk()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	OnOK();
+}
+
+void CTestPOSDlg::OnBnClickedRadio1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	((CEdit *)GetDlgItem(IDC_EDIT1))->SetWindowText("COM1:9600,N,8,1");
+	m_iPortType = 0;
+}
+
+void CTestPOSDlg::OnBnClickedRadio2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+   ((CEdit *)GetDlgItem(IDC_EDIT1))->SetWindowText("LPT1:");
+   m_iPortType = 1;
+}
+
+void CTestPOSDlg::OnBnClickedRadio3()
+{
+	// TODO: 在此添加控件通知处理程序代码
+   ((CEdit *)GetDlgItem(IDC_EDIT1))->SetWindowText("SP-USB1");
+   m_iPortType = 2;
+}
+
+void CTestPOSDlg::OnBnClickedRadio4()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	((CEdit *)GetDlgItem(IDC_EDIT1))->SetWindowText("192.168.1.203:9100");
+	m_iPortType = 3;
+}
+
+void CTestPOSDlg::OnBnClickedOpenPort()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CString strPort;
+    ((CEdit *)GetDlgItem(IDC_EDIT1))->GetWindowText(strPort);
+	int ipt;
+	switch (m_iPortType)
+	{
+		case 0:
+			ipt = POS_PT_COM;
+			break;
+		case 1:
+			ipt = POS_PT_LPT;
+			break;
+		case 2:
+			ipt = POS_PT_USB;
+			break;
+		case 3:
+			ipt = POS_PT_NET;
+			break;
+		default:
+			ipt = POS_PT_COM;
+			break;
+	}
+	m_hPrinter = POS_Port_OpenA((LPSTR)(LPCSTR)strPort, ipt, FALSE, "");
+	if(m_hPrinter < 0)
+	{
+		POS_Port_Close(m_hPrinter);
+		MessageBox(_T("打开失败"));
+		return;
+	}
+	else
+	{
+		MessageBox(_T("打开成功"));
+		return;
+	}
+
+}
+
+void CTestPOSDlg::OnBnClickedClosePort()
+{
+	// TODO: 在此添加控件通知处理程序代码
+    LONG ret = POS_Port_Close(m_hPrinter);
+	switch (ret)
+	{
+	case POS_ES_SUCCESS:
+		MessageBox(_T("关闭成功"));
+		break;
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+}
+
+void CTestPOSDlg::OnBnClickedBrowseBmp()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_strTmp.LoadString(IDS_Bitmap_File_Filter);
+	CFileDialog dlg(TRUE,_T("bmp"),_T(".bmp"), NULL, m_strTmp, NULL, 0, 0);
+	if(dlg.DoModal() == IDOK)
+	{
+        m_strImagePath = dlg.GetPathName();
+        ((CEdit *)GetDlgItem(IDC_EDIT2))->SetWindowText(m_strImagePath);
+        ShowImage(m_strImagePath);
+	}
+}
+
+void CTestPOSDlg::ShowImage(CString path)
+{
+	CRect lRect;
+	m_strBitmapStatic.GetClientRect(&lRect);
+
+	CImage image;
+	image.Load(path);
+	int width = image.GetWidth();
+	int height = image.GetHeight();
+
+	int realWidth, realHeight;
+
+	if(width > height)
+	{
+		realWidth = lRect.Width();
+		realHeight = realWidth * height / width;
+	}
+	else
+	{
+		realHeight = lRect.Height();
+		realWidth = realHeight * width / height;
+	}
+
+	//第一个参数NULL 表示不使用内部资源文件。外部图片。
+	m_hCurrentSelBitmap = (HBITMAP)::LoadImage (NULL,path,IMAGE_BITMAP,realWidth,realHeight,LR_LOADFROMFILE|LR_CREATEDIBSECTION);
+	// 显示图片
+	m_strBitmapStatic.SetBitmap(m_hCurrentSelBitmap);
+
+	Invalidate(TRUE);
+}
+
+void CTestPOSDlg::ButtonInit()
+{
+	m_hPrinter = 0;
+	m_iPortType = 0;
+	m_hPrinter = 0;
+	m_iBitmapType = 0;
+	m_nPaperType = 0;
+	((CButton *)GetDlgItem(IDC_RADIO1))->SetCheck(TRUE);
+	((CButton *)GetDlgItem(IDC_RADIO5))->SetCheck(TRUE);
+	((CEdit *)GetDlgItem(IDC_EDIT1))->SetWindowText("COM1:9600,N,8,1");
+    ((CEdit *)GetDlgItem(IDC_EDIT3))->SetWindowText(_T("Hi, thank you for choosing our printer, We will get your the best experience!\r\n感谢您选择我们的打印机\r\n\r\n"));
+	((CComboBox*)GetDlgItem(IDC_COMBO1))->InsertString(0,"左对齐");
+	((CComboBox*)GetDlgItem(IDC_COMBO1))->InsertString(1,"居中");
+	((CComboBox*)GetDlgItem(IDC_COMBO1))->InsertString(2,"右对齐");
+    ((CComboBox*)GetDlgItem(IDC_COMBO1))->SetCurSel(0);
+	((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("NO.123456");
+    ((CEdit *)GetDlgItem(IDC_EDIT5))->SetWindowText("50");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(0,"POS_BT_UPCA");
+    ((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(1,"POS_BT_UPCE");
+    ((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(2,"POS_BT_JAN13");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(3,"POS_BT_JAN8");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(4,"POS_BT_CODE39");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(5,"POS_BT_ITF");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(6,"POS_BT_CODABAR");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(7,"POS_BT_CODE93");
+	((CComboBox*)GetDlgItem(IDC_COMBO2))->InsertString(8,"POS_BT_CODE128");
+    ((CComboBox*)GetDlgItem(IDC_COMBO2))->SetCurSel(8);
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->InsertString(0,"2");
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->InsertString(1,"3");
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->InsertString(2,"4");
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->InsertString(3,"5");
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->InsertString(4,"6");
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->SetCurSel(0);
+	((CComboBox*)GetDlgItem(IDC_COMBO4))->InsertString(0,"不打印");
+	((CComboBox*)GetDlgItem(IDC_COMBO4))->InsertString(1,"在条码上方打印");
+	((CComboBox*)GetDlgItem(IDC_COMBO4))->InsertString(2,"在条码下方打印");
+	((CComboBox*)GetDlgItem(IDC_COMBO4))->InsertString(3,"条码上、下方都打印");
+	((CComboBox*)GetDlgItem(IDC_COMBO4))->SetCurSel(2);
+	((CEdit *)GetDlgItem(IDC_EDIT6))->SetWindowText("www.test.com");
+	((CEdit *)GetDlgItem(IDC_EDIT8))->SetWindowText("2");
+	((CComboBox*)GetDlgItem(IDC_COMBO6))->InsertString(0,"POS_BT_PDF417");
+	((CComboBox*)GetDlgItem(IDC_COMBO6))->InsertString(1,"POS_BT_DATAMATRIX");
+	((CComboBox*)GetDlgItem(IDC_COMBO6))->InsertString(2,"POS_BT_QRCODE");
+	((CComboBox*)GetDlgItem(IDC_COMBO6))->SetCurSel(0);
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->InsertString(0,"1");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->InsertString(1,"2");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->InsertString(2,"3");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->InsertString(3,"4");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->InsertString(4,"5");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->InsertString(5,"6");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->SetCurSel(5);
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(0,"0");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(1,"1");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(2,"2");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(3,"3");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(4,"4");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(5,"5");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(6,"6");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(7,"7");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(8,"8");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->SetCurSel(6);
+	((CButton *)GetDlgItem(IDC_RADIO7))->SetCheck(TRUE);
+
+}
+
+void CTestPOSDlg::OnBnClickedBitmapPrint()
+{
+	// TODO: 在此添加控件通知处理程序代码
+    LPCSTR strImagePath = NULL;
+	if (!m_strImagePath.IsEmpty())
+	{
+       strImagePath = m_strImagePath;
+	}
+
+	LONG ret;
+	if (m_iBitmapType == 0)
+	{
+		if (strImagePath != NULL)
+		{
+			FILE* file = fopen(strImagePath, "r");
+			if (file)
+			{
+				int size = filelength(fileno(file));
+				fclose(file);
+				if (size > 7168)
+				{
+					MessageBox(_T("图片超大,请选择图形方式打印"));
+					return;
+				}
+			}
+
+		}
+		ret = POS_Output_DownloadRamBmpA(m_hPrinter,strImagePath);
+	} 
+	else
+	{
+		ret = POS_Output_PrintBmpDirectA(m_hPrinter,strImagePath);
+	}
+
+	switch (ret)
+	{
+	case POS_ES_SUCCESS:
+		if (m_iBitmapType == 0)
+		{
+		   POS_Output_PrintRamBmp(m_hPrinter,0);
+		}
+		MessageBox(_T("打印成功"));
+		break;
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_NONMONOCHROMEBITMAP:
+		MessageBox(_T("非单色位图"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("下载超时"));
+		break;
+	case POS_ES_FILEOPENERROR:
+		MessageBox(_T("图片打开失败"));
+		break;
+	default:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+}
+
+void CTestPOSDlg::OnBnClickedCutPaper()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	/*LONG ret = POS_Control_CutPaper(m_hPrinter,1,3);
+
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	case POS_ES_SUCCESS:
+		MessageBox(_T("发送成功"));
+		break;
+	}*/
+	Color24_GrayBW("D:\\daikin_qrcode.bmp","D:\\daikin_qrcode1.bmp");
+}
+
+void CTestPOSDlg::OnBnClickedCashBox()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret = POS_Control_CashDraw(m_hPrinter,1,100,100);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	case POS_ES_SUCCESS:
+		MessageBox(_T("发送成功"));
+		break;
+	}
+}
+
+void CTestPOSDlg::OnBnClickedPrinterId()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	char  szBuff[10] = {0};
+	LONG ret = POS_Input_PrinterId(m_hPrinter,szBuff);
+	switch (ret)
+	{
+	case POS_ES_SUCCESS:
+		MessageBox(szBuff);
+		break;
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_READFAIL:
+		MessageBox(_T("读失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+}
+
+void CTestPOSDlg::OnBnClickedBlackMark()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret = POS_Control_BlackMark(m_hPrinter);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	case POS_ES_SUCCESS:
+		MessageBox(_T("发送成功"));
+		break;
+	}
+}
+
+void CTestPOSDlg::OnBnClickedOutPaper()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret = POS_Status_RTQueryStatus(m_hPrinter);
+	switch (ret)
+	{
+	case POS_ES_SUCCESS:
+		MessageBox(_T("有纸"));
+		break;
+	case POS_ES_PAPEROUT:
+		MessageBox(_T("缺纸"));
+		break;
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_READFAIL:
+		MessageBox(_T("读失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+
+}
+
+void CTestPOSDlg::OnBnClickedStateQuery()
+{
+	// TODO: 在此添加控件通知处理程序代码
+    int nDrawerHigh = 0; //钱箱高电平
+	int nDoorOpen = 0;   //纸仓开
+    int nCut = 0;        //切刀错误
+	int nPaperOut = 0;   //缺纸
+    int nPaperEnding = 0; //纸将尽
+
+	LONG ret = POS_Status_RTQueryTypeStatus(m_hPrinter,1);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_READFAIL:
+		MessageBox(_T("读失败"));
+		return;
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	if (ret == POS_ES_DRAWERHIGH)
+	{
+       nDrawerHigh = 1;
+	}
+	ret = POS_Status_RTQueryTypeStatus(m_hPrinter,2);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_READFAIL:
+		MessageBox(_T("读失败"));
+		return;
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	if (ret == POS_ES_DOOROPEN)
+	{
+       nDoorOpen = 1;
+	}
+	ret = POS_Status_RTQueryTypeStatus(m_hPrinter,3);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_READFAIL:
+		MessageBox(_T("读失败"));
+		return;
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	if (ret == POS_ES_CUT)
+	{
+		nCut = 1;
+	}
+	ret = POS_Status_RTQueryTypeStatus(m_hPrinter,4);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_READFAIL:
+		MessageBox(_T("读失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	if (ret == POS_ES_PAPEROUT)
+	{
+		nPaperOut = 1;
+	}
+	else if (ret == POS_ES_PAPERENDING)
+	{
+       nPaperEnding = 1;
+	}
+
+	CString strMessage;
+	strMessage = _T("#");
+	if (nDrawerHigh == 1)
+	{
+		strMessage = strMessage + _T("钱箱高电平") + _T("#");
+	}
+	else
+	{
+		strMessage = strMessage + _T("钱箱低电平电平") + _T("#");
+	}
+	if (nDoorOpen == 1)
+	{
+		strMessage = strMessage + _T("纸仓开") + _T("#");
+	}
+	else
+	{
+		strMessage = strMessage + _T("纸仓未开") + _T("#");
+	}
+	if (nCut == 1)
+	{
+		strMessage = strMessage + _T("切刀错误") + _T("#");
+	}
+	else
+	{
+		strMessage = strMessage + _T("切刀正常") + _T("#");
+	}
+	if (nPaperOut == 1)
+	{
+		strMessage = strMessage + _T("缺纸") + _T("#");
+	}
+	else
+	{
+		strMessage = strMessage + _T("有纸") + _T("#");
+	}
+	if (nPaperEnding == 1)
+	{
+		strMessage = strMessage + _T("纸将尽") + _T("#");
+	}
+	else
+	{
+		strMessage = strMessage + _T("纸充足") + _T("#");
+	}
+	MessageBox(strMessage);
+
+} 
+
+void CTestPOSDlg::OnBnClickedCharacterPrint()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	int nCompress = 0;//压缩字体
+    int nUnderline = 0;//下划线
+    int nBold = 0;//加粗
+	int iWidth = 0;//倍宽
+    int iHeight = 0;//倍高
+	CString strWelcome; 
+	((CEdit *)GetDlgItem(IDC_EDIT3))->GetWindowText(strWelcome);
+
+	if(BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK1))->GetCheck()) //旋转打印
+	{
+       POS_Control_SetRotaryPrint(m_hPrinter,1);
+	}
+	else
+	{
+       POS_Control_SetRotaryPrint(m_hPrinter,0);
+	}
+
+	if(BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK2))->GetCheck()) //反白打印
+	{
+		POS_Control_OppositeColor(m_hPrinter,TRUE);
+	}
+	else
+	{
+        POS_Control_OppositeColor(m_hPrinter,FALSE);
+	}
+
+	if(BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK3))->GetCheck()) //倒置打印
+	{
+		POS_Control_SetInvertedPrint(m_hPrinter,1);
+	}
+	else
+	{
+        POS_Control_SetInvertedPrint(m_hPrinter,0);
+	}
+
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO1))->GetCurSel())
+	{
+	case 0:
+		POS_Control_AlignType(m_hPrinter,0);
+		break;
+	case 1:
+		POS_Control_AlignType(m_hPrinter,1);
+		break;
+	case 2:
+		POS_Control_AlignType(m_hPrinter,2);
+		break;
+	}
+    
+    if (BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK4))->GetCheck()) //压缩字体
+    {
+        nCompress = 1;
+    }
+
+	if (BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK5))->GetCheck()) //下划线
+	{
+		nUnderline = 1;
+	}
+
+	if (BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK6))->GetCheck()) //加粗
+	{
+		nBold = 1;
+	}
+
+	if (BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK7))->GetCheck()) //倍宽
+	{
+		iWidth = 1;
+	}
+
+	if (BST_CHECKED==((CButton*)GetDlgItem(IDC_CHECK8))->GetCheck()) //倍高
+	{
+		iHeight = 1;
+	}
+
+	POS_Control_SetPrintFontC(m_hPrinter,iWidth,iHeight,nUnderline);
+	LONG ret = POS_Output_PrintFontStringA(m_hPrinter,nCompress,nBold,iWidth,iHeight,nUnderline,strWelcome);
+
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("发送失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+   
+   POS_Control_ReSet(m_hPrinter);
+
+}
+
+void CTestPOSDlg::OnBnClickedOneDimensionalBarcode()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	int nBarcodeType;
+	int nBarCodeWidth;
+	CString strBarCodeHeight;
+	int nBarCodeHeight;
+    int nBarCodeLocation;
+	CString strTest;
+
+    ((CEdit *)GetDlgItem(IDC_EDIT4))->GetWindowText(strTest);
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO2))->GetCurSel())
+	{
+	case 0:
+		nBarcodeType = POS_BT_UPCA;
+		break;
+	case 1:
+		nBarcodeType = POS_BT_UPCE;
+		break;
+	case 2:
+		nBarcodeType = POS_BT_JAN13;
+		break;
+	case 3:
+		nBarcodeType = POS_BT_JAN8;
+		break;
+	case 4:
+		nBarcodeType = POS_BT_CODE39;
+		break;
+	case 5:
+		nBarcodeType = POS_BT_ITF;
+		break;
+	case 6:
+		nBarcodeType = POS_BT_CODABAR;
+		break;
+	case 7:
+		nBarcodeType = POS_BT_CODE93;
+		break;
+	case 8:
+		nBarcodeType = POS_BT_CODE128;
+		break;
+	}
+
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO3))->GetCurSel())
+	{
+	case 0:
+		nBarCodeWidth = 2;
+		break;
+	case 1:
+		nBarCodeWidth = 3;
+		break;
+	case 2:
+		nBarCodeWidth = 4;
+		break;
+	case 3:
+		nBarCodeWidth = 5;
+		break;
+	case 4:
+		nBarCodeWidth = 6;
+		break;
+	}
+
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO4))->GetCurSel())
+	{
+	case 0:
+		nBarCodeLocation = 4011;
+		break;
+	case 1:
+		nBarCodeLocation = 4012;
+		break;
+	case 2:
+		nBarCodeLocation = 4013;
+		break;
+	case 3:
+		nBarCodeLocation = 4014;
+		break;
+	}
+
+   ((CEdit *)GetDlgItem(IDC_EDIT5))->GetWindowText(strBarCodeHeight);
+   nBarCodeHeight = atoi(strBarCodeHeight);
+
+   LONG ret = POS_Output_PrintOneDimensionalBarcodeA(m_hPrinter,nBarcodeType,nBarCodeWidth,nBarCodeHeight,nBarCodeLocation,strTest);
+
+   switch (ret)
+   {
+   case POS_ES_INVALIDPARA:
+	   MessageBox(_T("参数错误"));
+	   break;
+   case POS_ES_WRITEFAIL:
+	   MessageBox(_T("发送失败"));
+	   break;
+   case POS_ES_OVERTIME:
+	   MessageBox(_T("超时"));
+	   break;
+   case POS_ES_OTHERERRORS:
+	   MessageBox(_T("其他错误"));
+	   break;
+   }
+
+   POS_Control_ReSet(m_hPrinter);
+
+}
+
+void CTestPOSDlg::OnBnClickedTwoDimensionalBarcode()
+{
+	// TODO: 在此添加控件通知处理程序代码
+    int nType;
+	CString strParameter1;
+	int nParameter1;
+	CString strParameter2;
+    int nParameter2;
+	CString strParameter3;
+	int nParameter3;
+	CString strTest;
+    ((CEdit *)GetDlgItem(IDC_EDIT6))->GetWindowText(strTest);
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO6))->GetCurSel())
+	{
+	case 0:
+         nType = POS_BT_PDF417;
+		((CEdit *)GetDlgItem(IDC_EDIT8))->GetWindowText(strParameter1);
+        nParameter1 = atoi(strParameter1);
+		((CComboBox*)GetDlgItem(IDC_COMBO3))->GetWindowText(strParameter2);
+        nParameter2 = atoi(strParameter2);
+		break;
+	case 1:
+		nType = POS_BT_DATAMATRIX;
+		((CEdit *)GetDlgItem(IDC_EDIT8))->GetWindowText(strParameter1);
+		nParameter1 = atoi(strParameter1);
+		((CEdit*)GetDlgItem(IDC_EDIT9))->GetWindowText(strParameter2);
+		nParameter2 = atoi(strParameter2);		
+		break;
+	case 2:
+		nType = POS_BT_QRCODE;
+		((CEdit *)GetDlgItem(IDC_EDIT8))->GetWindowText(strParameter1);
+		nParameter1 = atoi(strParameter1);
+		((CComboBox*)GetDlgItem(IDC_COMBO7))->GetWindowText(strParameter2);
+		nParameter2 = atoi(strParameter2);
+		break;
+	}
+
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->GetWindowText(strParameter3);
+    nParameter3 = atoi(strParameter3);
+
+    LONG ret = POS_Output_PrintTwoDimensionalBarcodeA(m_hPrinter,nType,nParameter1,nParameter2,nParameter3,strTest);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("发送失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+
+	POS_Control_ReSet(m_hPrinter);
+}
+
+void CTestPOSDlg::OnCbnSelchange()
+{
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO6))->GetCurSel())
+	{
+	case 0:
+		SelchangePDF417();
+		break;
+	case 1:
+		SelchangeDATAMATRIX();
+		break;
+	case 2:
+		SelchangeQRCODE();
+		break;
+	}
+   
+}
+
+void CTestPOSDlg::OnCbnSelchangeOneDimensionalBarcode()
+{
+	((CEdit *)GetDlgItem(IDC_EDIT5))->SetWindowText("50");
+	((CComboBox*)GetDlgItem(IDC_COMBO3))->SetCurSel(0);
+	((CComboBox*)GetDlgItem(IDC_COMBO4))->SetCurSel(2);
+	switch (((CComboBox*)GetDlgItem(IDC_COMBO2))->GetCurSel())
+	{
+	case 0:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("12345678922");
+		break;
+	case 1:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("01200000345");
+		break;
+	case 2:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("123456789222");
+		break;
+	case 3:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("1234567");
+		break;
+	case 4:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("1234567");
+		break;
+	case 5:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("12345");
+		break;
+	case 6:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("12345");
+		break;
+	case 7:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("12345");
+		break;
+	case 8:
+		((CEdit *)GetDlgItem(IDC_EDIT4))->SetWindowText("NO.123456");
+		break;
+	}
+}
+
+void  CTestPOSDlg::SelchangePDF417()
+{
+   ((CEdit *)GetDlgItem(IDC_STATIC_P1))->SetWindowText("每行字符数");
+   ((CEdit *)GetDlgItem(IDC_STATIC_P2))->SetWindowText("纠错等级");
+    GetDlgItem(IDC_COMBO7)->ShowWindow(true);
+	GetDlgItem(IDC_EDIT9)->ShowWindow(false);
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->ResetContent();
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(0,"0");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(1,"1");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(2,"2");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(3,"3");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(4,"4");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(5,"5");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(6,"6");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(7,"7");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(8,"8");
+   ((CComboBox*)GetDlgItem(IDC_COMBO7))->SetCurSel(6);
+   ((CEdit *)GetDlgItem(IDC_EDIT8))->SetWindowText("2");
+   ((CComboBox*)GetDlgItem(IDC_COMBO8))->SetCurSel(5);
+
+}
+void  CTestPOSDlg::SelchangeDATAMATRIX()
+{
+	((CEdit *)GetDlgItem(IDC_STATIC_P1))->SetWindowText("图形高");
+	((CEdit *)GetDlgItem(IDC_EDIT8))->SetWindowText("40");
+	((CEdit *)GetDlgItem(IDC_STATIC_P2))->SetWindowText("图形宽");
+	CRect rect;
+	GetDlgItem(IDC_COMBO7)->GetWindowRect(&rect);
+	ScreenToClient(&rect);
+	GetDlgItem(IDC_COMBO7)->ShowWindow(false);
+	GetDlgItem(IDC_EDIT9)->ShowWindow(true);
+	CWnd *pWnd;
+	pWnd = GetDlgItem( IDC_EDIT9 ); 
+	pWnd->SetWindowPos(NULL,rect.left,rect.top,0,0,SWP_NOSIZE);
+	((CEdit *)GetDlgItem(IDC_EDIT9))->SetWindowText("40");
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->SetCurSel(3);
+
+}
+void  CTestPOSDlg::SelchangeQRCODE()
+{
+	((CEdit *)GetDlgItem(IDC_STATIC_P1))->SetWindowText("图形版本号");
+	((CEdit *)GetDlgItem(IDC_EDIT8))->SetWindowText("2");
+	((CEdit *)GetDlgItem(IDC_STATIC_P2))->SetWindowText("纠错等级");
+	GetDlgItem(IDC_COMBO7)->ShowWindow(true);
+	GetDlgItem(IDC_EDIT9)->ShowWindow(false);
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->ResetContent();
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(0,"76");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(1,"77");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(2,"81");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->InsertString(3,"72");
+	((CComboBox*)GetDlgItem(IDC_COMBO7))->SetCurSel(1);
+	((CComboBox*)GetDlgItem(IDC_COMBO8))->SetCurSel(3);
+}
+
+void CTestPOSDlg::OnBnClickedBrowseFile()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CFileDialog dlg(TRUE,_T("txt"),_T(".txt"), NULL, "_T(""位图文件(*.TXT)|*.TXT||"")", NULL, 0, 0);
+	if(dlg.DoModal() == IDOK)
+	{
+		m_strFilePath = dlg.GetPathName();
+		((CEdit *)GetDlgItem(IDC_EDIT7))->SetWindowText(m_strFilePath);
+	}
+
+}
+
+void CTestPOSDlg::OnBnClickedPrintFile()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LPCSTR strFilePath = NULL;
+	LONG ret;
+	if (!m_strFilePath.IsEmpty())
+	{
+		strFilePath = m_strFilePath;
+	}
+	ret = POS_Output_SendLocalFileA(m_hPrinter,strFilePath);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("发送超时"));
+		return;
+		break;
+	case POS_ES_FILEOPENERROR:
+		MessageBox(_T("文件打开失败"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	POS_Control_CutPaper(m_hPrinter,1,1);
+
+}
+
+void CTestPOSDlg::OnBnClickedRadioRom()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_iBitmapType = 0;
+}
+
+void CTestPOSDlg::OnBnClickedRadioDrive()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_iBitmapType = 1;
+}
+
+void CTestPOSDlg::OnBnClickedCatering()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret;
+	ret = POS_Control_ReSet(m_hPrinter);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("发送超时"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	char cmd[] = {0x1c, 0x26};
+	POS_Output_PrintData(m_hPrinter,cmd,2);
+	if (m_nPaperType == 0)
+	{
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,1,0,0,"***餐馆\r\n客人就餐消费单\r\n");
+		POS_Control_AlignType(m_hPrinter,0);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,0,0,0,"桌号：28\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"——————————————————————\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"酒店日期：2016-5-6                餐段：晚餐\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"单号：0012                      服务员：小小\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"菜品名称         数量       规格        小计\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"——————————————————————\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"健怡雪碧         4            瓶       40.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"鲟龙鱼         1.5            斤       28.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"——————————————————————\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"                             消费合计：68.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"折扣代码：                   折扣金额： 0.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"                             应收金额：68.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"打印时间：2016-5-6   21:32:49               \r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"餐饮系统 www.***.com.cn             \r\n\r\n\r\n");
+		POS_Control_CutPaper(m_hPrinter,1,3);
+
+	} 
+	else if (m_nPaperType == 1)
+	{
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,1,0,0,"***餐馆\r\n客人就餐消费单\r\n");
+		POS_Control_AlignType(m_hPrinter,0);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,0,0,0,"桌号：28\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"———————————————— \r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"酒店日期：2016-5-6   餐段：晚餐\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"单号：0012         服务员：小小\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"菜品名称   数量  规格  小计\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"———————————————— \r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"健怡雪碧     4    瓶  40.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"鲟龙鱼     1.5    斤  28.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"———————————————— \r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"            消费合计：68.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"折扣代码：  折扣金额： 0.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"            应收金额：68.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"打印时间：2016-5-6 21:32:49 \r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"餐饮系统 www.***.com.cn \r\n\r\n\r\n");
+		//POS_Control_CutPaper(m_hPrinter,1,1);
+
+	}
+	else if (m_nPaperType == 2)
+	{
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"***餐馆\r\n客人就餐消费单\r\n");
+		POS_Control_AlignType(m_hPrinter,0);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,0,0,0,"桌号：28\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"———————————————————\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"酒店日期：2016-5-6     餐段：晚餐\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"单号：0012           服务员：小小\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"菜品名称     数量    规格     小计\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"———————————————————\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"健怡雪碧      4      瓶    40.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"鲟龙鱼      1.5      斤    28.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"———————————————————\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"                 消费合计：68.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"折扣代码：         折扣金额： 0.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"                 应收金额：68.00\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"打印时间：2016-5-6   21:32:49   \r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"餐饮系统 www.***.com.cn\r\n\r\n\r\n\r\n\r\n");
+		POS_Control_CutPaper(m_hPrinter,1,3);
+	}
+	POS_Control_ReSet(m_hPrinter);
+}
+
+
+
+void CTestPOSDlg::OnBnClickedRadioPaperType88()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_nPaperType = 0;
+}
+
+void CTestPOSDlg::OnBnClickedRadioPaperType58()
+{
+	// TODO: 在此添加控件通知处理程序代码
+    m_nPaperType = 1;
+}
+
+void CTestPOSDlg::OnBnClickedRadioPaperType76()
+{
+	// TODO: 在此添加控件通知处理程序代码
+    m_nPaperType = 2;
+
+}
+
+void CTestPOSDlg::OnBnClickedButtonCashier()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret;
+	ret = POS_Control_ReSet(m_hPrinter);
+	switch (ret)
+	{
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		return;
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		return;
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("发送超时"));
+		return;
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		return;
+		break;
+	}
+	char cmd[] = {0x1c, 0x26};
+	POS_Output_PrintData(m_hPrinter,cmd,2);
+	if (m_nPaperType == 0)
+	{
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,1,0,0,"超市收据小票\r\n");
+		POS_Control_AlignType(m_hPrinter,0);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,0,0,0,"日期:    2016-02-18                 收银:08\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"-------------------------------------------\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"品名               数量                金额\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"可口可乐             1                 6.20\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"金威啤酒             1                 3.80\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"-------------------------------------------\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"合计数量:3                      合计金额:10\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"实收    :20                     找零    :10\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"微信支付:\r\n");
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintTwoDimensionalBarcodeA(m_hPrinter,POS_BT_QRCODE,2,77,4,"www.chaoshi.com");
+		POS_Control_CutPaper(m_hPrinter,1,3);
+
+	} 
+	else if (m_nPaperType == 1)
+	{
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,1,0,0,"超市收据小票\r\n");
+		POS_Control_AlignType(m_hPrinter,0);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,0,0,0,"日期:2016-02-18       收银:08\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"-----------------------------\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"品名           数量      金额\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"可口可乐        1        6.20\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"金威啤酒        1        3.80\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"-----------------------------\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"合计数量:3        合计金额:10\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"实收    :20       找零    :10\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"微信支付:\r\n");
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintTwoDimensionalBarcodeA(m_hPrinter,POS_BT_QRCODE,2,77,4,"www.chaoshi.com");
+		//POS_Control_CutPaper(m_hPrinter,1,1);
+
+	}
+	else if (m_nPaperType == 2)
+	{
+		POS_Control_AlignType(m_hPrinter,1);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,1,0,0,"超市收据小票\r\n");
+		POS_Control_AlignType(m_hPrinter,0);
+		POS_Output_PrintFontStringA(m_hPrinter,0,1,0,0,0,"日期: 2016-02-18         收银:08\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"--------------------------------\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"品名            数量        金额\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"可口可乐          1         6.20\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"金威啤酒          1         3.80\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"--------------------------------\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"合计数量:3           合计金额:10\r\n");
+		POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"实收    :20          找零    :10\r\n\r\n\r\n\r\n\r\n");
+		//POS_Output_PrintFontStringA(m_hPrinter,0,0,0,0,0,"微信支付:\r\n");
+		//POS_Control_AlignType(m_hPrinter,1);
+		//POS_Output_PrintTwoDimensionalBarcodeA(m_hPrinter,POS_BT_QRCODE,2,77,4,"www.chaoshi.com");
+		POS_Control_CutPaper(m_hPrinter,1,3);
+	}
+	POS_Control_ReSet(m_hPrinter);
+
+
+
+	/*ret = Draw2DBarCodeTSPL(m_hPrinter,20,20,"x6","Draw2DBarCodeTSPL");
+	if(ret < 0)
+	{
+		info.Format("Draw2DBarCodeTSPL错误:%d",ret);
+		MessageBox(info);
+	}*/
+	/*ret = DownLoadBitMapTSPL(m_hPrinter,FALSE,"F:/zhangtongli_work/位图测试/goodwork.bmp");
+	if(ret < 0)
+	{
+		info.Format("DownLoadBitMapTSPL错误:%d",ret);
+		MessageBox(info);
+	}
+	ret = PutBitMapTSPL(m_hPrinter,10,20,"goodwork.BMP");
+	if(ret < 0)
+	{
+		info.Format("PutBitMapTSPL错误:%d",ret);
+		MessageBox(info);
+	}*/
+}
+
+void CTestPOSDlg::OnBnClickedTest()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret;
+	ret = POS_Control_PrintTestpage(m_hPrinter);
+	switch (ret)
+	{
+	case POS_ES_SUCCESS:
+		MessageBox(_T("发送成功"));
+		break;
+	case POS_ES_INVALIDPARA:
+		MessageBox(_T("参数错误"));
+		break;
+	case POS_ES_WRITEFAIL:
+		MessageBox(_T("写失败"));
+		break;
+	case POS_ES_OVERTIME:
+		MessageBox(_T("发送超时"));
+		break;
+	case POS_ES_OTHERERRORS:
+		MessageBox(_T("其他错误"));
+		break;
+	}
+}
+
+void CTestPOSDlg::OnBnClickedButton25()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	LONG ret = -1;
+	CString info;
+	
+	SetIs21();//用于确认机型是TL21便于内部区别指令以及相关条件
+	//以下方法中未加特别说明支持机型的方法即为通用方法
+	ret = ClearBuffTSPL(m_hPrinter);
+	if(ret < 0)
+	{
+		info.Format("ClearBuffTSPL错误:%d",ret);
+		MessageBox(info);
+	}
+	//设置页宽页高
+	ret = PageSetupTSPL(m_hPrinter,45,56);
+	switch(ret)
+	{
+		case -1:
+			info.Format("PageSetupTSPL错误:%d",ret);
+			MessageBox(info);
+			break;
+		case -2:
+			info.Format("PageSetupTSPL参数PageWidth错误:%d",ret);
+			MessageBox(info);
+			break;
+		case -3:
+			info.Format("PageSetupTSPL参数PageHeight错误:%d",ret);
+			MessageBox(info);
+			break;
+	}
+	//画线
+	ret = DrawLineTSPL(m_hPrinter,10,10,100,100);
+	if(ret < 0)
+	{
+		info.Format("DrawLineTSPL错误:%d",ret);
+		MessageBox(info);
+	}
+	ret = DrawBorderTSPL(m_hPrinter,20,20,200,200,5);
+	if(ret < 0)
+	{
+		info.Format("DrawBorderTSPL错误:%d",ret);
+		MessageBox(info);
+	}
+	//打印文字
+	ret = DrawTextTSPL(m_hPrinter,0,0,TRUE,1,1,0,"DrawTextTSPL");
+	switch(ret)
+	{
+		case -1:
+					info.Format("DrawTextTSPL参数错误:%d",ret);
+					MessageBox(info);
+		break;
+		case -2:
+					info.Format("DrawTextTSPL 参数rotate错误:%d",ret);
+					MessageBox(info);
+		break;
+		case -3:
+					info.Format("DrawTextTSPL 参数xMultiplication 错误:%d",ret);
+					MessageBox(info);
+		break;
+		case -4:
+					info.Format("DrawTextTSPL 参数yMultiplication 错误:%d",ret);
+					MessageBox(info);
+		break;
+	}
+	//打印一维条码
+	ret = DrawBarCodeTSPL(m_hPrinter,10,10,"128",30,TRUE,0,2,4,"123456");
+	switch(ret)
+	{
+		case -1:
+					info.Format("DrawBarCodeTSPL参数错误:%d",ret);
+					MessageBox(info);
+		break;
+		case -2:
+					info.Format("DrawBarCodeTSPL 参数rotate错误:%d",ret);
+					MessageBox(info);
+		break;
+		case -3:
+					info.Format("DrawBarCodeTSPL 参数type 错误:%d",ret);
+					MessageBox(info);
+		break;
+	}
+	
+	//TL21打印缓冲区
+	PrintTSPL21(m_hPrinter,1);
+
+	//设置进纸退纸距离
+	ret = SetPaperbackOrPaperFeedTSPL(m_hPrinter,TRUE,50);
+	if(ret < 0)
+	{
+		info.Format("SetPaperbackOrPaperFeedTSPL错误:%d",ret);
+		MessageBox(info);
+	}
+	else if(ret == -2)
+	{
+	info.Format("SetPaperbackOrPaperFeedTSPL参数mDot错误:%d",ret);
+		MessageBox(info);
+	}	
+	
+	//使蜂鸣器响一声
+	ret = DriveBeepTSPL(m_hPrinter);
+	if(ret < 0)
+	{
+		info.Format("DriveBeepTSPL:%d",ret);
+		MessageBox(info);
+	}	
+	
+	
+	
+	
+	//以下是支持TL51的个别方法
+	/*	LONG ret =0；
+		CString info;
+	   
+	   ret = ClearBuffTSPL(m_hPrinter);
+		if(ret < 0)
+		{
+			info.Format("ClearBuffTSPL错误:%d",ret);
+			MessageBox(info);
+		}
+		ret = PageSetupTSPL(m_hPrinter,100,225);
+		if(ret < 0)
+		{
+			info.Format("PageSetupTSPL错误:%d",ret);
+			MessageBox(info);
+	}
+
+		ret = DownLoadBitMapTSPL(m_hPrinter,FALSE,”D://LOG.bmp”);
+		if(ret < 0)
+		{
+			info.Format("DownLoadBitMapTSPL错误:%d",ret);
+			MessageBox(info);
+		}
+	   else if(ret == -2)
+		{
+		info.Format("DownLoadBitMapTSPL打开文件错误:%d",ret);
+				MessageBox(info);
+		}
+	ret = PutBitMapTSPL(m_hPrinter,10,10,”D://LOG.BMP”);
+		if(ret < 0)
+		{
+			info.Format("PutBitMapTSPL错误:%d",ret);
+			MessageBox(info);
+		}
+		
+		ret = Draw2DBarCodeTSPL(m_hPrinter,30,30,”x1”,”12345”);
+		if(ret < 0)
+		{
+			info.Format("Draw2DBarCodeTSPL错误:%d",ret);
+			MessageBox(info);
+		}
+	   else if(ret == -2)
+		{
+		info.Format("Draw2DBarCodeTSPL参数max错误:%d",ret);
+				MessageBox(info);
+		}
+	PrintTSPL(m_hPrinter,1,1);*/
+}

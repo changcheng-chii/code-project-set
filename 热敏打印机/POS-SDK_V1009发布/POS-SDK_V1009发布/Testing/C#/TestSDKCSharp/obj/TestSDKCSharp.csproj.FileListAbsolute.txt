@@ -1,0 +1,16 @@
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\bin\Debug\TestSDKCSharp.exe
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\bin\Debug\TestSDKCSharp.pdb
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\obj\Debug\ResolveAssemblyReference.cache
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\obj\Debug\TestSDKCSharp.Form1.resources
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\obj\Debug\TestSDKCSharp.Properties.Resources.resources
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\obj\Debug\TestSDKCSharp.csproj.GenerateResource.Cache
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\obj\Debug\TestSDKCSharp.exe
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\TestSDKCSharp\obj\Debug\TestSDKCSharp.pdb
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\obj\Debug\TestSDKCSharp.exe
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\obj\Debug\TestSDKCSharp.pdb
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\bin\Debug\TestSDKCSharp.exe
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\bin\Debug\TestSDKCSharp.pdb
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\obj\Debug\ResolveAssemblyReference.cache
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\obj\Debug\TestSDKCSharp.Form1.resources
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\obj\Debug\TestSDKCSharp.Properties.Resources.resources
+D:\Workdoc\其它软件\POS_SDK新\Testing\C#\TestSDKCSharp\obj\Debug\TestSDKCSharp.csproj.GenerateResource.Cache
